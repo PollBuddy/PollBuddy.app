@@ -1,0 +1,19 @@
+server {
+
+    listen       80;
+    listen  [::]:80;
+
+    server_name dev-TEMPLATE_COMMITID.pollbuddy.app;
+
+    access_log /var/log/nginx/dev-TEMPLATE_COMMITID-access.log;
+    error_log  /var/log/nginx/dev-TEMPLATE_COMMITID-error.log;
+
+    location / {
+        proxy_pass  http://localhost:TEMPLATE_PORT;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+    }
+
+}
+
