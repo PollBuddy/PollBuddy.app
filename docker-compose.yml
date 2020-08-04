@@ -4,3 +4,5 @@ services:
     build: dev-webserver/
     ports:
       - "80:80"
+    volumes:
+      - /home/pollbuddy/dev-site-configs:/etc/nginx/conf.d/dev-site-configs

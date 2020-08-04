@@ -9,7 +9,7 @@ server {
     error_log  /var/log/nginx/dev-TEMPLATE_COMMITID-error.log;
 
     location / {
-        proxy_pass  http://localhost:TEMPLATE_PORT;
+        proxy_pass  http://10.20.31.109:TEMPLATE_PORT;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
         proxy_set_header Host $host;
