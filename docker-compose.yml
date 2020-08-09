@@ -2,6 +2,7 @@ version: '3'
 services:
   webserver:
     build: webserver/
+    restart: unless-stopped
     ports:
       - "80:80"
     volumes:
