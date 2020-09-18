@@ -8,3 +8,8 @@ services:
     volumes:
       - /home/pollbuddy/dev-site-configs:/etc/nginx/conf.d/dev-site-configs
       - /home/pollbuddy/meetings:/var/www-meetings
+    links:
+      - php
+
+  php:
+    image: php:7-fpm
