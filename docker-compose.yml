@@ -8,10 +8,11 @@ services:
     volumes:
       - /home/pollbuddy/dev-site-configs:/etc/nginx/conf.d/dev-site-configs
       - /home/pollbuddy/meetings:/var/www-meetings
-    links:
+    depends_on:
       - php
 
   php:
     image: php:7-fpm
+    restart: unless-stopped
     volumes:
       - /home/pollbuddy/meetings:/var/www-meetings
