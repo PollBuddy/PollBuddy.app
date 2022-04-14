@@ -35,19 +35,36 @@ function initSession(req) {
   }
 }
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
   initSession(req);
-  res.render('index', { title: 'Hey', message: 'Hello there!', githubAuthorized: req.session.githubAuthorized, pollbuddyMember: req.session.pollbuddyMember })
-})
+  /*await getDevInstances(function(data) {
+    // Convert dev instances into something useful
 
-app.get('/listpods', (req, res) => {
-  kubernetes.listPods(function(data) {
-    res.send(data.items);
+    return res.render('index', { title: 'Hey', message: 'Hello there!', githubAuthorized: req.session.githubAuthorized, pollbuddyMember: req.session.pollbuddyMember, devInstances: data });
   });
+  listDeployments(function(){});*/
+  await listServices(function(data){
+    // Convert dev instance services into something useful to display
+    for(let i = 0; i < data.length; i++) {
+      console.log(data[i].pods[0]);
+    }
+
+    console.log("Request done");
+    return res.render('index', { title: 'Hey', message: 'Hello there!', githubAuthorized: req.session.githubAuthorized, pollbuddyMember: req.session.pollbuddyMember, devInstances: data });
+
+  });
+
 });
 
-// Github oAuth
+function getDevInstances(callback) {
+  kubernetes.listPods(function(data) {
+    callback(data.items);
+  });
+}
+
+// GitHub oAuth
 const axios = require('axios');
+const {listDeployments, listServices} = require("./kubernetes");
 app.get('/github-auth', (req, res) => {
   res.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env["GITHUB_CLIENT_ID"]}&scope=read:org`);
 });
@@ -59,7 +76,7 @@ app.get('/github-oauth-callback', async (req, res) => {
     code: req.query.code
   };
   const opts = {headers: {accept: 'application/json'}};
-  await axios.post(`https://github.com/login/oauth/access_token`, body, opts).then(res => res.data['access_token']).then(async _token => {
+  await axios.post(`https://github.com/login/oauth/access_token`, body, opts).then(result => result.data['access_token']).then(async _token => {
     req.session.github_access_token = _token;
     req.session.githubAuthorized = true;
 
