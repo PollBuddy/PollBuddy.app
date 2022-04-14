@@ -1,0 +1,14 @@
+doctype html
+html(lang="en")
+html
+    head
+        title= title
+    body
+        h1= message
+        if !githubAuthorized
+            a(class='button' href='/github-auth') Authenticate with GitHub to enable full functionality.
+        else
+            if pollbuddyMember
+              p.description Welcome, Poll Buddy member, enjoy full functionality!
+            else
+                p.description Thank you for authenticating, but unfortunately you are not a member of Poll Buddy, and therefore will not have full functionality.
