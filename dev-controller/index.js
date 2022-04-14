@@ -1,10 +1,11 @@
 const express = require('express')
+const app = express()
 const os = require('os')
 const kubernetes = require('./kubernetes')
 const dotenv = require('dotenv').config()
+const logger = require("morgan");
 
-
-const app = express()
+const {listServices, startService, stopService, deleteService} = require("./kubernetes");
 
 // Express Session
 const expressSession = require("express-session");
@@ -24,47 +25,58 @@ app.use(expressSession({
   }),
 }));
 
+app.use(logger("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.set('view engine', 'pug')
 
-function initSession(req) {
+// Middleware to set up the session
+app.use((req, res, next) => {
   if(req.session.githubAuthorized === undefined) {
     req.session.githubAuthorized = false;
   }
   if(req.session.pollbuddyMember === undefined) {
     req.session.pollbuddyMember = false;
   }
-}
-
-app.get('/', async (req, res) => {
-  initSession(req);
-  /*await getDevInstances(function(data) {
-    // Convert dev instances into something useful
-
-    return res.render('index', { title: 'Hey', message: 'Hello there!', githubAuthorized: req.session.githubAuthorized, pollbuddyMember: req.session.pollbuddyMember, devInstances: data });
-  });
-  listDeployments(function(){});*/
-  await listServices(function(data){
-    // Convert dev instance services into something useful to display
-    for(let i = 0; i < data.length; i++) {
-      console.log(data[i].pods[0]);
-    }
-
-    console.log("Request done");
-    return res.render('index', { title: 'Hey', message: 'Hello there!', githubAuthorized: req.session.githubAuthorized, pollbuddyMember: req.session.pollbuddyMember, devInstances: data });
-
-  });
-
+  next();
 });
 
-function getDevInstances(callback) {
-  kubernetes.listPods(function(data) {
-    callback(data.items);
+app.get('/', async (req, res) => {
+  await listServices(function(data){
+    return res.render('index', { title: 'Hey', message: 'Hello there!', githubAuthorized: req.session.githubAuthorized, pollbuddyMember: req.session.pollbuddyMember, devInstances: data });
   });
-}
+});
+
+app.get('/api', async (req, res) => {
+  return res.json({"ok": true});
+});
+
+// Controlling instances
+app.get('/api/deployment', async (req, res) => {
+  return res.json({"ok": true});
+});
+
+app.post('/api/deployment/start', async (req, res) => {
+  console.log(req.body);
+  await startService(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+    return res.json({"ok": result});
+  });
+});
+
+app.post('/api/deployment/stop', async (req, res) => {
+  await stopService(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+    return res.json({"ok": result});
+  });
+});
+
+app.post('/api/deployment/delete', async (req, res) => {
+  await deleteService(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+    return res.json({"ok": result});
+  });
+});
 
 // GitHub oAuth
 const axios = require('axios');
-const {listDeployments, listServices} = require("./kubernetes");
 app.get('/github-auth', (req, res) => {
   res.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env["GITHUB_CLIENT_ID"]}&scope=read:org`);
 });

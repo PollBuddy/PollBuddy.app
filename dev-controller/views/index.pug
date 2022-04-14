@@ -5,6 +5,8 @@ html
         title= 'Poll Buddy Dev Site'
         style
             include style.css
+        script
+            include manage_instances.js
     body
         h1='Poll Buddy Dev Site'
         // Github oauth and membership check
@@ -29,9 +31,10 @@ html
                         each pod in instance["pods"]
                             p.description #{pod.metadata.name}: #{pod.status.phase}
                     if githubAuthorized && pollbuddyMember
-                        a(class='button-start' href='/api/deployment/start?dev-instance-type=' + instance.metadata.labels["dev-instance-type"] + "&dev-instance-id=" + instance.metadata.labels["dev-instance-id"]) (Re)Start Instance
-                        a(class='button-stop' href='/api/deployment/stop?dev-instance-type=' + instance.metadata.labels["dev-instance-type"] + "&dev-instance-id=" + instance.metadata.labels["dev-instance-id"]) Stop Instance
-                        a(class='button-delete' href='/api/deployment/delete?dev-instance-type=' + instance.metadata.labels["dev-instance-type"] + "&dev-instance-id=" + instance.metadata.labels["dev-instance-id"]) Delete Instance
+                        button(class='button-start' onclick='deployment_action("' + instance.metadata.labels["dev-instance-type"] + '", "' + instance.metadata.labels["dev-instance-id"] + '", "start")') (Re)Start Instance
+                        button(class='button-stop' onclick='deployment_action("' + instance.metadata.labels["dev-instance-type"] + '", "' + instance.metadata.labels["dev-instance-id"] + '", "stop")') Stop Instance
+                        button(class='button-delete' onclick='deployment_action("' + instance.metadata.labels["dev-instance-type"] + '", "' + instance.metadata.labels["dev-instance-id"] + '", "delete")') Delete Instance
+                    p(id=instance.metadata.labels["dev-instance-type"] + '-' + instance.metadata.labels["dev-instance-id"])
 
 
 
