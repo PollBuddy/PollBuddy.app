@@ -6,7 +6,10 @@ COPY package.json package-lock.json ./
 
 RUN npm install --production
 
-COPY . .
+COPY views ./views
+COPY index.js ./index.js
+COPY kubernetes.js ./kubernetes.js
+
 
 EXPOSE 3000
 

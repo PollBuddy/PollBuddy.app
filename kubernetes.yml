@@ -1,0 +1,181 @@
+# Secrets
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: poll-buddy-management-server-secrets
+  labels:
+    app.kubernetes.io/name: poll-buddy-management-server
+    app.kubernetes.io/component: management-server
+    app.kubernetes.io/part-of: poll-buddy
+    app: poll-buddy-management-server
+data:
+  # This should be changed
+  session_secret: b3czdGZ1UUprb0VzM1dEREJOVVVBWHBTNVFxMkdMYnA=
+
+# Allocate a volume for data storage
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: poll-buddy-volume-claim-management-server-master
+  labels:
+    app.kubernetes.io/name: poll-buddy-management-server
+    app.kubernetes.io/component: management-server
+    app.kubernetes.io/part-of: poll-buddy
+    app: poll-buddy-management-server
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+# Create a service to access the deployment pods
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: poll-buddy-management-server-service
+  labels:
+    app.kubernetes.io/name: poll-buddy-management-server
+    app.kubernetes.io/component: management-server
+    app.kubernetes.io/part-of: poll-buddy
+    app: poll-buddy-management-server
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: nginx
+  selector:
+    app.kubernetes.io/name: poll-buddy-management-server
+    app.kubernetes.io/component: management-server
+    app.kubernetes.io/part-of: poll-buddy
+    app: poll-buddy-management-server
+  type: ClusterIP
+
+# Create a deployment to run in
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: poll-buddy-management-server
+  labels:
+    app.kubernetes.io/name: poll-buddy-management-server
+    app.kubernetes.io/component: management-server
+    app.kubernetes.io/part-of: poll-buddy
+    app: poll-buddy-management-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: poll-buddy-management-server
+      app.kubernetes.io/component: management-server
+      app.kubernetes.io/part-of: poll-buddy
+      app: poll-buddy-management-server
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: poll-buddy-management-server
+        app.kubernetes.io/component: management-server
+        app.kubernetes.io/part-of: poll-buddy
+        app: poll-buddy-management-server
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: nginx
+          image: pollbuddy/proxy-server:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: nginx
+          volumeMounts:
+            - name: dev-site-configs
+              mountPath: /etc/nginx/conf.d.dev
+          # Probes to report the status of the application
+          startupProbe: # Runs to know when the app started up
+            httpGet:
+              path: /
+              port: nginx
+              scheme: HTTP
+            failureThreshold: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 5
+          readinessProbe: # Runs to make sure the app is ready to receive requests
+            httpGet:
+              path: /
+              port: nginx
+              scheme: HTTP
+            failureThreshold: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+            initialDelaySeconds: 5
+          livenessProbe: # Runs to make sure the app is alive
+            httpGet:
+              path: /
+              port: nginx
+              scheme: HTTP
+            failureThreshold: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            initialDelaySeconds: 5
+
+        - name: dev-controller
+          image: pollbuddy/dev-controller:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: temp-volume
+              mountPath: /app/temp
+            - name: dev-site-configs
+              mountPath: /etc/nginx/conf.d.dev
+          env:
+            - name: CLUSTER_DNS_SUBDOMAIN
+              value: default.svc.cluster.local
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: poll-buddy-management-server-secrets
+                  key: session_secret
+          # Probes to report the status of the application
+          startupProbe: # Runs to know when the app started up
+            httpGet:
+              path: /
+              port: dev-controller
+              scheme: HTTP
+            failureThreshold: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 5
+          readinessProbe: # Runs to make sure the app is ready to receive requests
+            httpGet:
+              path: /
+              port: dev-controller
+              scheme: HTTP
+            failureThreshold: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+            initialDelaySeconds: 5
+          livenessProbe: # Runs to make sure the app is alive
+            httpGet:
+              path: /
+              port: dev-controller
+              scheme: HTTP
+            failureThreshold: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            initialDelaySeconds: 5
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
+        - name: dev-site-configs
+          persistentVolumeClaim:
+            claimName: poll-buddy-volume-claim-management-server-master

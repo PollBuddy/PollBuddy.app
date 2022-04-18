@@ -5,7 +5,7 @@ const kubernetes = require('./kubernetes')
 const dotenv = require('dotenv').config()
 const logger = require("morgan");
 
-const {listServices, startService, stopService, deleteService} = require("./kubernetes");
+const {listServices, startService, stopService, deleteService, deployDevInstance} = require("./kubernetes");
 
 // Express Session
 const expressSession = require("express-session");
@@ -72,6 +72,12 @@ app.post('/api/deployment/stop', async (req, res) => {
 
 app.post('/api/deployment/delete', async (req, res) => {
   await deleteService(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+    return res.json({"ok": result});
+  });
+});
+
+app.post('/api/deployment/new', async (req, res) => {
+  await deployDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
     return res.json({"ok": result});
   });
 });
