@@ -43,6 +43,7 @@ app.use((req, res, next) => {
 
 app.get('/', async (req, res) => {
   await listServices(function(data){
+    // TODO: Sort the services by creation timestamp
     return res.render('index', { title: 'Hey', message: 'Hello there!', githubAuthorized: req.session.githubAuthorized, pollbuddyMember: req.session.pollbuddyMember, devInstances: data });
   });
 });
