@@ -72,6 +72,18 @@ module.exports = {
   deleteService: function(dev_instance_type, dev_instance_id, callback) {
     return callback(true);
   },
+
+  deployDevInstance: function(dev_instance_type, dev_instance_id, callback) {
+    // Create a new folder to manage the instance files in
+
+    // Clone repo
+
+    // Enter kubernetes folder
+
+    // Replace "master" and add other info as necessary to converf to a dev instance
+
+    // Apply them to kubernetes
+  },
 }
 
 
