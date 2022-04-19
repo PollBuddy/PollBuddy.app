@@ -1,18 +1,3 @@
-# Secrets
-apiVersion: v1
-kind: Secret
-type: Opaque
-metadata:
-  name: poll-buddy-management-server-secrets
-  labels:
-    app.kubernetes.io/name: poll-buddy-management-server
-    app.kubernetes.io/component: management-server
-    app.kubernetes.io/part-of: poll-buddy
-    app: poll-buddy-management-server
-data:
-  # This should be changed
-  session_secret: b3czdGZ1UUprb0VzM1dEREJOVVVBWHBTNVFxMkdMYnA=
-
 # Allocate a volume for data storage
 ---
 kind: PersistentVolumeClaim
@@ -52,7 +37,47 @@ spec:
     app.kubernetes.io/component: management-server
     app.kubernetes.io/part-of: poll-buddy
     app: poll-buddy-management-server
-  type: ClusterIP
+  type: NodePort
+
+# Service Accounts and Authorizations
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: poll-buddy-management-server-service-account
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: poll-buddy-management-server-service-role
+rules:
+  - apiGroups: ["*"]
+    resources: ["configmaps"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["deployments"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["services"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["pods"]
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: poll-buddy-management-server-service-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: poll-buddy-management-server-service-account
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: poll-buddy-management-server-service-role
+  apiGroup: rbac.authorization.k8s.io
+
 
 # Create a deployment to run in
 ---
@@ -83,6 +108,8 @@ spec:
         app.kubernetes.io/part-of: poll-buddy
         app: poll-buddy-management-server
     spec:
+      serviceAccountName: poll-buddy-deployment-server-service-account
+      shareProcessNamespace: true
       restartPolicy: Always
       containers:
         - name: nginx
@@ -133,20 +160,34 @@ spec:
             - name: temp-volume
               mountPath: /app/temp
             - name: dev-site-configs
-              mountPath: /etc/nginx/conf.d.dev
+              mountPath: /app/conf.d.dev
           env:
             - name: CLUSTER_DNS_SUBDOMAIN
               value: default.svc.cluster.local
-            - name: SESSION_SECRET
+            - name: EXPRESS_SESSION_SECRET
               valueFrom:
                 secretKeyRef:
                   name: poll-buddy-management-server-secrets
                   key: session_secret
+            - name: GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: poll-buddy-management-server-secrets
+                  key: github_client_id
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: poll-buddy-management-server-secrets
+                  key: github_client_secret
+          securityContext:
+            capabilities:
+              add:
+                - SYS_PTRACE
           # Probes to report the status of the application
           startupProbe: # Runs to know when the app started up
             httpGet:
               path: /
-              port: dev-controller
+              port: 3000
               scheme: HTTP
             failureThreshold: 10
             periodSeconds: 5
@@ -156,7 +197,7 @@ spec:
           readinessProbe: # Runs to make sure the app is ready to receive requests
             httpGet:
               path: /
-              port: dev-controller
+              port: 3000
               scheme: HTTP
             failureThreshold: 2
             periodSeconds: 10
@@ -166,7 +207,7 @@ spec:
           livenessProbe: # Runs to make sure the app is alive
             httpGet:
               path: /
-              port: dev-controller
+              port: 3000
               scheme: HTTP
             failureThreshold: 2
             periodSeconds: 10

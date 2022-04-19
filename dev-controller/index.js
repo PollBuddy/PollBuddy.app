@@ -5,7 +5,7 @@ const kubernetes = require('./kubernetes')
 const dotenv = require('dotenv').config()
 const logger = require("morgan");
 
-const {listServices, startService, stopService, deleteService, deployDevInstance} = require("./kubernetes");
+const {listServices, startDevInstance, stopDevInstance, deleteDevInstance, deployDevInstance} = require("./kubernetes");
 
 // Express Session
 const expressSession = require("express-session");
@@ -59,19 +59,19 @@ app.get('/api/deployment', async (req, res) => {
 
 app.post('/api/deployment/start', async (req, res) => {
   console.log(req.body);
-  await startService(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+  await startDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
     return res.json({"ok": result});
   });
 });
 
 app.post('/api/deployment/stop', async (req, res) => {
-  await stopService(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+  await stopDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
     return res.json({"ok": result});
   });
 });
 
 app.post('/api/deployment/delete', async (req, res) => {
-  await deleteService(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+  await deleteDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
     return res.json({"ok": result});
   });
 });
