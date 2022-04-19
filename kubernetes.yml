@@ -108,7 +108,7 @@ spec:
         app.kubernetes.io/part-of: poll-buddy
         app: poll-buddy-management-server
     spec:
-      serviceAccountName: poll-buddy-deployment-server-service-account
+      serviceAccountName: poll-buddy-management-server-service-account
       shareProcessNamespace: true
       restartPolicy: Always
       containers:

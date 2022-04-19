@@ -18,6 +18,7 @@ echo "Starting deployTestInstance.sh Script..."
 # Name the variables
 ID=$1
 TYPE=$2
+CLUSTER_DNS_SUBDOMAIN=$3
 SHORTID=${ID:0:7}
 
 ###############
@@ -132,7 +133,7 @@ cp NGINX_TEMPLATE.conf "conf.d.dev/${ID}.conf" || { echo "Template NGINX Config 
 
 # Edit configuration file
 sed -i "s/TEMPLATE_ID/${ID}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
-sed -i "s/TEMPLATE_SERVICE_NAME/${SVCNAME}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
+sed -i "s/TEMPLATE_SERVICE_NAME/${SVCNAME}.${CLUSTER_DNS_SUBDOMAIN}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
 sed -i "s/TEMPLATE_SERVICE_PORT/${SVCPORT}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
 
 # We're done!
