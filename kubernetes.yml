@@ -64,6 +64,24 @@ rules:
   - apiGroups: ["*"]
     resources: ["pods"]
     verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["secrets"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["serviceaccounts"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["clusterrolebindings"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["clusterroles"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["statefulsets"]
+    verbs: ["*"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -179,6 +197,11 @@ spec:
                 secretKeyRef:
                   name: poll-buddy-management-server-secrets
                   key: github_client_secret
+            - name: CICD_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: poll-buddy-management-server-secrets
+                  key: github_cicd_key
           securityContext:
             capabilities:
               add:
@@ -186,7 +209,7 @@ spec:
           # Probes to report the status of the application
           startupProbe: # Runs to know when the app started up
             httpGet:
-              path: /
+              path: /api
               port: 3000
               scheme: HTTP
             failureThreshold: 10
@@ -196,7 +219,7 @@ spec:
             initialDelaySeconds: 5
           readinessProbe: # Runs to make sure the app is ready to receive requests
             httpGet:
-              path: /
+              path: /api
               port: 3000
               scheme: HTTP
             failureThreshold: 2
@@ -206,7 +229,7 @@ spec:
             initialDelaySeconds: 5
           livenessProbe: # Runs to make sure the app is alive
             httpGet:
-              path: /
+              path: /api
               port: 3000
               scheme: HTTP
             failureThreshold: 2

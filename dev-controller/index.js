@@ -59,27 +59,43 @@ app.get('/api/deployment', async (req, res) => {
 
 app.post('/api/deployment/start', async (req, res) => {
   console.log(req.body);
-  await startDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
-    return res.json({"ok": result});
-  });
+  if(req.session.githubAuthorized) {
+    await startDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function (result) {
+      return res.json({"ok": result});
+    });
+  } else {
+    return res.status(401).json({"ok": false});
+  }
 });
 
 app.post('/api/deployment/stop', async (req, res) => {
-  await stopDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
-    return res.json({"ok": result});
-  });
+  if(req.session.githubAuthorized) {
+    await stopDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+      return res.json({"ok": result});
+    });
+  } else {
+    return res.status(401).json({"ok": false});
+  }
 });
 
 app.post('/api/deployment/delete', async (req, res) => {
-  await deleteDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
-    return res.json({"ok": result});
-  });
+  if(req.session.githubAuthorized) {
+    await deleteDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+      return res.json({"ok": result});
+    });
+  } else {
+    return res.status(401).json({"ok": false});
+  }
 });
 
 app.post('/api/deployment/new', async (req, res) => {
-  await deployDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
-    return res.json({"ok": result});
-  });
+  if(req.session.githubAuthorized || req.body.key === process.env["CICD_KEY"]) {
+    await deployDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+      return res.json({"ok": result});
+    });
+  } else {
+    return res.status(401).json({"ok": false});
+  }
 });
 
 // GitHub oAuth
