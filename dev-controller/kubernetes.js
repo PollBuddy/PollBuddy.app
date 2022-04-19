@@ -1,5 +1,4 @@
 const k8s = require('@kubernetes/client-node');
-const Git = require("nodegit");
 const fs = require('fs');
 
 var deployingInstances = [];
