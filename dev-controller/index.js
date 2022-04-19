@@ -61,7 +61,11 @@ app.post('/api/deployment/start', async (req, res) => {
   console.log(req.body);
   if(req.session.githubAuthorized) {
     await startDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function (result) {
-      return res.json({"ok": result});
+      if(result) {
+        return res.json({"ok": true});
+      } else {
+        return res.status(500).json({"ok": false});
+      }
     });
   } else {
     return res.status(401).json({"ok": false});
@@ -71,7 +75,11 @@ app.post('/api/deployment/start', async (req, res) => {
 app.post('/api/deployment/stop', async (req, res) => {
   if(req.session.githubAuthorized) {
     await stopDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
-      return res.json({"ok": result});
+      if(result) {
+        return res.json({"ok": true});
+      } else {
+        return res.status(500).json({"ok": false});
+      }
     });
   } else {
     return res.status(401).json({"ok": false});
@@ -81,7 +89,11 @@ app.post('/api/deployment/stop', async (req, res) => {
 app.post('/api/deployment/delete', async (req, res) => {
   if(req.session.githubAuthorized) {
     await deleteDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
-      return res.json({"ok": result});
+      if(result) {
+        return res.json({"ok": true});
+      } else {
+        return res.status(500).json({"ok": false});
+      }
     });
   } else {
     return res.status(401).json({"ok": false});
@@ -91,7 +103,11 @@ app.post('/api/deployment/delete', async (req, res) => {
 app.post('/api/deployment/new', async (req, res) => {
   if(req.session.githubAuthorized || req.body.key === process.env["CICD_KEY"]) {
     await deployDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
-      return res.json({"ok": result});
+      if(result) {
+        return res.json({"ok": true});
+      } else {
+        return res.status(500).json({"ok": false});
+      }
     });
   } else {
     return res.status(401).json({"ok": false});

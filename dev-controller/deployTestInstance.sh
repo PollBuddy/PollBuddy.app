@@ -145,7 +145,7 @@ echo "Dev site configured"
 
 # Talk about it
 echo "Reloading dev site configs"
-kill -s HUP "$(cat /var/run/nginx.pid)" || { echo "NGINX Reload Failed, Aborting."; exit 1; }
+ps -ef | grep "nginx: master process" | grep -v grep | awk '{print $2}' | xargs kill -s HUP || { echo "NGINX Reload Failed, Aborting."; exit 1; }
 
 # We're done!
 echo "Dev site reloaded"
