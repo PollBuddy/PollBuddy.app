@@ -10,6 +10,7 @@ COPY views ./views
 COPY index.js ./index.js
 COPY kubernetes.js ./kubernetes.js
 COPY deployTestInstance.sh ./deployTestInstance.sh
+COPY deleteTestInstance.sh ./deleteTestInstance.sh
 COPY NGINX_TEMPLATE.conf ./NGINX_TEMPLATE.conf
 
 
