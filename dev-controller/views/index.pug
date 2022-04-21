@@ -7,6 +7,7 @@ html
             include style.css
         script
             include manage_instances.js
+
     body
         h1='Poll Buddy Dev Site'
         // Github oauth and membership check
@@ -23,18 +24,20 @@ html
         div
             each instance in devInstances
                 div(class='k8s-service')
-                    p.description Instance type: #{instance.metadata.labels["dev-instance-type"]}
-                    p.description Instance identifier: #{instance.metadata.labels["dev-instance-id"]}
+                    p.description Instance link:
+                        a(href='https://dev-' + instance.metadata.labels["dev_instance_id"] + '.pollbuddy.app') https://dev-#{instance.metadata.labels["dev_instance_id"]}.pollbuddy.app
+
+                    p.description Instance type: #{instance.metadata.labels["dev_instance_type"]}
+                    p.description Instance identifier: #{instance.metadata.labels["dev_instance_id"]}
                     p.description Creation timestamp: #{instance.metadata.creationTimestamp}
-                    p.description Pod status:
+                    p.description Pod statuses:
                     div(class='k8s-pods')
                         each pod in instance["pods"]
                             p.description #{pod.metadata.name}: #{pod.status.phase}
                     if githubAuthorized && pollbuddyMember
-                        button(class='button-start' onclick='deployment_action("' + instance.metadata.labels["dev-instance-type"] + '", "' + instance.metadata.labels["dev-instance-id"] + '", "start")') (Re)Start Instance
-                        button(class='button-stop' onclick='deployment_action("' + instance.metadata.labels["dev-instance-type"] + '", "' + instance.metadata.labels["dev-instance-id"] + '", "stop")') Stop Instance
-                        button(class='button-delete' onclick='deployment_action("' + instance.metadata.labels["dev-instance-type"] + '", "' + instance.metadata.labels["dev-instance-id"] + '", "delete")') Delete Instance
-                    p(id=instance.metadata.labels["dev-instance-type"] + '-' + instance.metadata.labels["dev-instance-id"])
-
+                        button(class='button-start' onclick='deployment_action("' + instance.metadata.labels["dev_instance_type"] + '", "' + instance.metadata.labels["dev_instance_id"] + '", "start")') (Re)Start Instance
+                        button(class='button-stop' onclick='deployment_action("' + instance.metadata.labels["dev_instance_type"] + '", "' + instance.metadata.labels["dev_instance_id"] + '", "stop")') Stop Instance
+                        button(class='button-delete' onclick='deployment_action("' + instance.metadata.labels["dev_instance_type"] + '", "' + instance.metadata.labels["dev_instance_id"] + '", "delete")') Delete Instance
+                br
 
 

@@ -4,55 +4,6 @@ const fs = require('fs');
 var deployingInstances = [];
 
 module.exports = {
-  listPods: function(callback) {
-    const kc = new k8s.KubeConfig();
-    kc.loadFromDefault();
-
-    const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
-
-    k8sApi.listNamespacedPod('default').then((res) => {
-      //console.log(res.body);
-      callback(res.body);
-    });
-  },
-
-  listDeployments: function(callback) {
-    const kc = new k8s.KubeConfig();
-    kc.loadFromDefault();
-
-    const k8sApi = kc.makeApiClient(k8s.AppsV1Api);
-
-    k8sApi.listNamespacedDeployment('default', "true", false, undefined, undefined, "app=poll-buddy").then((res) => {
-      //console.log(res.body);
-      callback(res.body.items);
-    });
-  },
-
-  listServices: function(callback) {
-    const kc = new k8s.KubeConfig();
-    kc.loadFromDefault();
-
-    const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
-
-    k8sApi.listNamespacedService('default', "true", false, undefined, undefined, /*"app.kubernetes.io/part-of=poll-buddy"*/).then(async (res) => {
-      console.log(res.body);
-      let items = res.body.items;
-      for (let i = 0; i < items.length; i++) {
-        // Add pod info
-        //console.log("ITEMS");
-        //console.log(items[i]);
-        await k8sApi.listNamespacedPod('default', "true", false,
-          undefined, undefined,
-          `app.kubernetes.io/part-of=poll-buddy,dev-instance-type=${items[i]["metadata"]["labels"]["dev-instance-type"]},dev-instance-id=${items[i]["metadata"]["labels"]["dev-instance-id"]}`)
-          .then((res) => {
-            //console.log(res.body);
-            items[i]["pods"] = res.body.items;
-          });
-
-      }
-      callback(res.body.items);
-    });
-  },
 
   listDevInstances: function(callback) {
     const kc = new k8s.KubeConfig();
@@ -60,8 +11,8 @@ module.exports = {
 
     const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
-    k8sApi.listNamespacedService('default', "true", false, undefined, undefined, /*"app.kubernetes.io/part-of=poll-buddy"*/).then(async (res) => {
-      console.log(res.body);
+    k8sApi.listNamespacedService('default', "true", false, undefined, undefined, "app.kubernetes.io/part-of=poll-buddy,environment=development,app.kubernetes.io/component=frontend").then(async (res) => {
+      //console.log(res.body);
       let items = res.body.items;
       for (let i = 0; i < items.length; i++) {
         // Add pod info
@@ -69,14 +20,13 @@ module.exports = {
         //console.log(items[i]);
         await k8sApi.listNamespacedPod('default', "true", false,
           undefined, undefined,
-          `app.kubernetes.io/part-of=poll-buddy,dev-instance-type=${items[i]["metadata"]["labels"]["dev-instance-type"]},dev-instance-id=${items[i]["metadata"]["labels"]["dev-instance-id"]}`)
+          `app.kubernetes.io/part-of=poll-buddy,environment=development,dev_instance_type=${items[i]["metadata"]["labels"]["dev_instance_type"]},dev_instance_id=${items[i]["metadata"]["labels"]["dev_instance_id"]}`)
           .then((res) => {
             //console.log(res.body);
             items[i]["pods"] = res.body.items;
           });
-
       }
-      callback(res.body.items);
+      callback(items);
     });
   },
 
@@ -94,16 +44,41 @@ module.exports = {
       }
     ];
     const options = {"headers": {"Content-type": k8s.PatchUtils.PATCH_FORMAT_JSON_PATCH}};
-    await k8sApi.patchNamespacedDeploymentScale('poll-buddy-deployment', 'default', patch, undefined, undefined, undefined, undefined, options)
+
+    // Get the deployment names for this instance
+    let deployments = [];
+    await k8sApi.listNamespacedDeployment('default', "true", false, undefined, undefined, `app.kubernetes.io/part-of=poll-buddy,environment=development,dev_instance_type=${dev_instance_type},dev_instance_id=${dev_instance_id}`).then((res) => {
+      for (let i = 0; i < res.body.items.length; i++) {
+        deployments.push(res.body.items[i].metadata.name);
+      }
+    });
+
+    // Update each deployment to have a replica scale of 1
+    for (let i = 0; i < deployments.length; i++) {
+      await k8sApi.patchNamespacedDeploymentScale(deployments[i], 'default', patch, undefined, undefined, undefined, undefined, options)
+        .then(() => {
+          console.log("Patched " + deployments[i]);
+        })
+        .catch((err) => {
+          console.log("Error: ");
+          console.log(err);
+          return callback(false);
+        });
+    }
+
+    // Scale up the DB too (3 instead)
+    patch[0]["value"] = 3;
+    await k8sApi.patchNamespacedStatefulSetScale("poll-buddy-db-statefulset-" + dev_instance_id.substring(0, 7), 'default', patch, undefined, undefined, undefined, undefined, options)
       .then(() => {
-        console.log("Patched.")
-        return callback(true);
+        console.log("Patched " + "poll-buddy-db-statefulset-" + dev_instance_id);
       })
       .catch((err) => {
         console.log("Error: ");
         console.log(err);
         return callback(false);
       });
+
+    return callback(true);
   },
 
   stopDevInstance: async function (dev_instance_type, dev_instance_id, callback) {
@@ -120,63 +95,41 @@ module.exports = {
       }
     ];
     const options = {"headers": {"Content-type": k8s.PatchUtils.PATCH_FORMAT_JSON_PATCH}};
-    await k8sApi.patchNamespacedDeploymentScale('poll-buddy-deployment', 'default', patch, undefined, undefined, undefined, undefined, options)
+
+    // Get the deployment names for this instance
+    let deployments = [];
+    await k8sApi.listNamespacedDeployment('default', "true", false, undefined, undefined, `app.kubernetes.io/part-of=poll-buddy,environment=development,dev_instance_type=${dev_instance_type},dev_instance_id=${dev_instance_id}`).then((res) => {
+      for (let i = 0; i < res.body.items.length; i++) {
+        deployments.push(res.body.items[i].metadata.name);
+      }
+    });
+
+    // Update each deployment to have a replica scale of 1
+    for (let i = 0; i < deployments.length; i++) {
+      await k8sApi.patchNamespacedDeploymentScale(deployments[i], 'default', patch, undefined, undefined, undefined, undefined, options)
+        .then(() => {
+          console.log("Patched " + deployments[i]);
+        })
+        .catch((err) => {
+          console.log("Error: ");
+          console.log(err);
+          return callback(false);
+        });
+    }
+
+    // Scale down the DB too
+    await k8sApi.patchNamespacedStatefulSetScale("poll-buddy-db-statefulset-" + dev_instance_id.substring(0, 7), 'default', patch, undefined, undefined, undefined, undefined, options)
       .then(() => {
-        console.log("Patched.")
-        return callback(true);
+        console.log("Patched " + "poll-buddy-db-statefulset-" + dev_instance_id);
       })
       .catch((err) => {
         console.log("Error: ");
         console.log(err);
         return callback(false);
       });
+
+    return callback(true);
   },
-
-  deleteDevInstance: function(dev_instance_type, dev_instance_id, callback) {
-    console.log("Deleting dev instance of type " + dev_instance_type + " and ID " + dev_instance_id);
-
-    // Create a new folder to manage the instance files in
-    let tempFolder = "./temp";
-    if (!fs.existsSync(tempFolder)){
-      fs.mkdirSync(tempFolder);
-    }
-
-    // Exclusivity lock
-    if(dev_instance_id in deployingInstances) {
-      setTimeout(function() {
-        this.deleteDevInstance(dev_instance_type, dev_instance_id, callback);
-      }, 5000);
-      return;
-    } else {
-      // Add it to the lock list
-      deployingInstances.push(dev_instance_id);
-    }
-
-    const { exec } = require('child_process');
-    exec('bash ./deleteTestInstance.sh ' + dev_instance_type + " " + dev_instance_id + " " + process.env["CLUSTER_DNS_SUBDOMAIN"],
-      (err, stdout, stderr) => {
-        if (err) {
-          // Some err occurred, report everything that happened
-          console.error(err);
-          console.log(`stdout: ${stdout}`);
-          console.log(`stderr: ${stderr}`);
-
-          // Remove it from the lock list
-          deployingInstances = deployingInstances.filter(item => item !== dev_instance_id)
-
-          callback(false);
-        } else {
-          // the entire stdout (buffered)
-          console.log(`stdout: ${stdout}`);
-
-          // Remove it from the lock list
-          deployingInstances = deployingInstances.filter(item => item !== dev_instance_id)
-
-          callback(true);
-        }
-      });
-  },
-
 
   deployDevInstance: function(dev_instance_type, dev_instance_id, callback) {
     console.log("Creating dev instance of type " + dev_instance_type + " and ID " + dev_instance_id);
@@ -221,7 +174,51 @@ module.exports = {
         callback(true);
       }
     });
+  },
 
+  deleteDevInstance: function(dev_instance_type, dev_instance_id, callback) {
+    console.log("Deleting dev instance of type " + dev_instance_type + " and ID " + dev_instance_id);
+
+    // Create a new folder to manage the instance files in
+    let tempFolder = "./temp";
+    if (!fs.existsSync(tempFolder)){
+      fs.mkdirSync(tempFolder);
+    }
+
+    // Exclusivity lock
+    if(dev_instance_id in deployingInstances) {
+      setTimeout(function() {
+        this.deleteDevInstance(dev_instance_type, dev_instance_id, callback);
+      }, 5000);
+      return;
+    } else {
+      // Add it to the lock list
+      deployingInstances.push(dev_instance_id);
+    }
+
+    const { exec } = require('child_process');
+    exec('bash ./deleteTestInstance.sh ' + dev_instance_type + " " + dev_instance_id + " " + process.env["CLUSTER_DNS_SUBDOMAIN"],
+      (err, stdout, stderr) => {
+      if (err) {
+        // Some err occurred, report everything that happened
+        console.error(err);
+        console.log(`stdout: ${stdout}`);
+        console.log(`stderr: ${stderr}`);
+
+        // Remove it from the lock list
+        deployingInstances = deployingInstances.filter(item => item !== dev_instance_id)
+
+        callback(false);
+      } else {
+        // the entire stdout (buffered)
+        console.log(`stdout: ${stdout}`);
+
+        // Remove it from the lock list
+        deployingInstances = deployingInstances.filter(item => item !== dev_instance_id)
+
+        callback(true);
+      }
+    });
   },
 }
 
