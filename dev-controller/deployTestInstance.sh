@@ -16,8 +16,8 @@ echo "Starting deployTestInstance.sh Script..."
 #######################
 
 # Name the variables
-ID=$1
-TYPE=$2
+TYPE=$1
+ID=$2
 CLUSTER_DNS_SUBDOMAIN=$3
 SHORTID=${ID:0:7}
 
@@ -26,7 +26,7 @@ SHORTID=${ID:0:7}
 ###############
 
 # Echo out what we're doing
-echo "Creating instance for commit/PR '${ID}'"
+echo "Creating instance for '${TYPE}' with ID '${ID}'"
 
 # Enter the folder to spin up an instance
 cd temp || { echo "Test Instances Folder Missing, Aborting."; exit 1; }

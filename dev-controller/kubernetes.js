@@ -135,13 +135,17 @@ module.exports = {
     }
 
     const { exec } = require('child_process');
-    exec('bash ./deployTestInstance.sh ' + dev_instance_id + " " + dev_instance_type + " " + process.env["CLUSTER_DNS_SUBDOMAIN"],
+    exec('bash ./deployTestInstance.sh ' + dev_instance_type + " " + dev_instance_id + " " + process.env["CLUSTER_DNS_SUBDOMAIN"],
       (err, stdout, stderr) => {
       if (err) {
         //some err occurred
         console.error(err);
         console.log(`stdout: ${stdout}`);
         console.log(`stderr: ${stderr}`);
+
+        // Remove it from the lock list
+        deployingInstances = deployingInstances.filter(item => item !== dev_instance_id)
+
         callback(false);
       } else {
         // the *entire* stdout and stderr (buffered)
