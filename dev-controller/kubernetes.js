@@ -107,10 +107,48 @@ module.exports = {
   },
 
   deleteDevInstance: function(dev_instance_type, dev_instance_id, callback) {
-    // Delete
+    console.log("Deleting dev instance of type " + dev_instance_type + " and ID " + dev_instance_id);
 
+    // Create a new folder to manage the instance files in
+    let tempFolder = "./temp";
+    if (!fs.existsSync(tempFolder)){
+      fs.mkdirSync(tempFolder);
+    }
 
-    return callback(true);
+    // Exclusivity lock
+    if(dev_instance_id in deployingInstances) {
+      setTimeout(function() {
+        this.deleteDevInstance(dev_instance_type, dev_instance_id, callback);
+      }, 5000);
+      return;
+    } else {
+      // Add it to the lock list
+      deployingInstances.push(dev_instance_id);
+    }
+
+    const { exec } = require('child_process');
+    exec('bash ./deleteTestInstance.sh ' + dev_instance_type + " " + dev_instance_id + " " + process.env["CLUSTER_DNS_SUBDOMAIN"],
+      (err, stdout, stderr) => {
+        if (err) {
+          // Some err occurred, report everything that happened
+          console.error(err);
+          console.log(`stdout: ${stdout}`);
+          console.log(`stderr: ${stderr}`);
+
+          // Remove it from the lock list
+          deployingInstances = deployingInstances.filter(item => item !== dev_instance_id)
+
+          callback(false);
+        } else {
+          // the entire stdout (buffered)
+          console.log(`stdout: ${stdout}`);
+
+          // Remove it from the lock list
+          deployingInstances = deployingInstances.filter(item => item !== dev_instance_id)
+
+          callback(true);
+        }
+      });
   },
 
 
@@ -126,7 +164,7 @@ module.exports = {
     // Exclusivity lock
     if(dev_instance_id in deployingInstances) {
       setTimeout(function() {
-        deployDevInstance(dev_instance_type, dev_instance_id, callback);
+        this.deployDevInstance(dev_instance_type, dev_instance_id, callback);
       }, 5000);
       return;
     } else {

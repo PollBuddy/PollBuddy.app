@@ -2,13 +2,13 @@
 
 ####################################################################################################
 # This script is designed to be called with a commit/pr ID and a type string (either issue or pr). #
-# It will then take that, clone the repo, check out the commit or PR, and configure and start      #
-# the app based on that.                                                                           #
+# It will then take that, clone the repo, check out the commit or PR, and configure and delete the #
+# (presumably) running app instance based on that.                                                 #
 ####################################################################################################
 
 # Requires packages: docker, docker-compose, procmail, git, sed, tac, potentially others depending on your distro
 
-echo "Starting deployTestInstance.sh Script..."
+echo "Starting deleteTestInstance.sh Script..."
 
 
 #######################
@@ -26,7 +26,7 @@ SHORTID=${ID:0:7}
 ###############
 
 # Echo out what we're doing
-echo "Creating instance for '${TYPE}' with ID '${ID}'"
+echo "Creating instance folder for '${TYPE}' with ID '${ID}'"
 
 # Enter the folder to spin up an instance
 cd temp || { echo "Test Instances Folder Missing, Aborting."; exit 1; }
@@ -105,14 +105,14 @@ echo "Configuring complete"
 #############################
 
 # Start the new instance
-echo "Starting instance"
-kubectl apply -f kubernetes/ || { echo "Kubectl Apply Failed, Aborting."; exit 1; }
+echo "Deleting instance"
+kubectl delete -f kubernetes/ || { echo "Kubectl Delete Failed, Aborting."; exit 1; }
 
 # Wait for the service to exist (for good measure)
 sleep 5
 
 # We're done!
-echo "Instance is now running"
+echo "Instance is now deleted"
 
 
 ######################
@@ -125,17 +125,8 @@ echo "Configuring dev site"
 # Move out of the instance folder
 cd ../../../
 
-# Copy example configuration file
-cp NGINX_TEMPLATE.conf "conf.d.dev/${ID}.conf" || { echo "Template NGINX Config Copy Failed, Aborting."; exit 1; }
-
-# Get the service port and name
-SVCNAME=poll-buddy-frontend-service-${SHORTID}
-SVCPORT=$(kubectl get svc --selector=app.kubernetes.io/name="${SVCNAME}" -o go-template='{{range .items}}{{range.spec.ports}}{{if .nodePort}}{{.nodePort}}{{"\n"}}{{end}}{{end}}{{end}}')
-
-# Edit configuration file
-sed -i "s/TEMPLATE_ID/${ID}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
-sed -i "s/TEMPLATE_SERVICE_NAME/${SVCNAME}.${CLUSTER_DNS_SUBDOMAIN}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
-sed -i "s/TEMPLATE_SERVICE_PORT/${SVCPORT}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
+# Delete the configuration file
+rm "conf.d.dev/${ID}.conf" || { echo "Instance NGINX Config Delete Failed, Aborting."; exit 1; }
 
 # We're done!
 echo "Dev site configured"
@@ -157,5 +148,4 @@ echo "Dev site reloaded"
 ##########
 
 # We're done!
-echo "Deployment completed successfully!"
-echo "Deploy Link: https://dev-${ID}.pollbuddy.app/"
+echo "Instance deletion completed successfully!"
