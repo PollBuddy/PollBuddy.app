@@ -138,7 +138,7 @@ module.exports = {
     exec('bash ./deployTestInstance.sh ' + dev_instance_type + " " + dev_instance_id + " " + process.env["CLUSTER_DNS_SUBDOMAIN"],
       (err, stdout, stderr) => {
       if (err) {
-        //some err occurred
+        // Some err occurred, report everything that happened
         console.error(err);
         console.log(`stdout: ${stdout}`);
         console.log(`stderr: ${stderr}`);
@@ -148,9 +148,8 @@ module.exports = {
 
         callback(false);
       } else {
-        // the *entire* stdout and stderr (buffered)
+        // the entire stdout (buffered)
         console.log(`stdout: ${stdout}`);
-        console.log(`stderr: ${stderr}`);
 
         // Remove it from the lock list
         deployingInstances = deployingInstances.filter(item => item !== dev_instance_id)

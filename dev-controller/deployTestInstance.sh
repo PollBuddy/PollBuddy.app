@@ -93,6 +93,7 @@ do
   sed -i "s/master/${SHORTID}/g" "$f" || { echo "SED Failed, Aborting."; exit 1; }
   sed -i "s/no-type/${TYPE}/g" "$f" || { echo "SED Failed, Aborting."; exit 1; }
   sed -i "s/no-id/${ID}/g" "$f" || { echo "SED Failed, Aborting."; exit 1; }
+  sed -i "s/latest/${ID}/g" "$f" || { echo "SED Failed, Aborting."; exit 1; }
 done
 
 # We're done configuring

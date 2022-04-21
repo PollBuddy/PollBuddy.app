@@ -100,9 +100,29 @@ app.post('/api/deployment/delete', async (req, res) => {
   }
 });
 
+// From https://github.com/actions/checkout/issues/58#issuecomment-576589498
+function parsePullRequestId(githubRef) {
+  const result = /refs\/pull\/(\d+)\/merge/g.exec(githubRef);
+  if (!result) throw new Error("Reference not found.");
+  const [, pullRequestId] = result;
+  return pullRequestId;
+}
+
 app.post('/api/deployment/new', async (req, res) => {
   if(req.session.githubAuthorized || req.body.key === process.env["CICD_KEY"]) {
-    await deployDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
+
+    // Parse the ID if necessary
+    let id;
+    if(req.body.dev_instance_type === "commit") {
+      id = req.body.dev_instance_id;
+    } else if(req.body.dev_instance_type === "pr") {
+      id = parsePullRequestId(req.body.dev_instance_id);
+    } else {
+      return res.status(400).json({"ok": false});
+    }
+
+    // Start the deployment
+    await deployDevInstance(req.body.dev_instance_type, id, function(result){
       if(result) {
         return res.json({"ok": true});
       } else {
