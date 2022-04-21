@@ -26,6 +26,7 @@ jobs:
           images: pollbuddy/proxy-server
           tags: |
             type=ref,event=branch
+            type=sha,format=long,prefix=,suffix=
             type=sha,format=long,suffix=-{{branch}}
             type=raw,value=latest
 
@@ -60,6 +61,7 @@ jobs:
           images: pollbuddy/dev-controller
           tags: |
             type=ref,event=branch
+            type=sha,format=long,prefix=,suffix=
             type=sha,format=long,suffix=-{{branch}}
             type=raw,value=latest
 
