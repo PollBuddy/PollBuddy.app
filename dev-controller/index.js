@@ -116,7 +116,13 @@ app.post('/api/deployment/new', async (req, res) => {
     if(req.body.dev_instance_type === "commit") {
       id = req.body.dev_instance_id;
     } else if(req.body.dev_instance_type === "pr") {
-      id = parsePullRequestId(req.body.dev_instance_id);
+      try {
+        id = parsePullRequestId(req.body.dev_instance_id);
+      } catch (e) {
+        console.log("Invalid PR ID received: " + req.body.dev_instance_id);
+        return res.status(400).json({"ok": false});
+      }
+
     } else {
       return res.status(400).json({"ok": false});
     }
@@ -124,7 +130,7 @@ app.post('/api/deployment/new', async (req, res) => {
     // Start the deployment
     await deployDevInstance(req.body.dev_instance_type, id, function(result){
       if(result) {
-        return res.json({"ok": true});
+        return res.json({"ok": true, "Deploy Link": "https://dev-" + id + ".pollbuddy.app/"});
       } else {
         return res.status(500).json({"ok": false});
       }
