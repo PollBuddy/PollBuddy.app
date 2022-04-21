@@ -5,7 +5,7 @@ const kubernetes = require('./kubernetes')
 const dotenv = require('dotenv').config()
 const logger = require("morgan");
 
-const {listServices, startDevInstance, stopDevInstance, deleteDevInstance, deployDevInstance} = require("./kubernetes");
+const {listServices, startDevInstance, stopDevInstance, deleteDevInstance, deployDevInstance, listDevInstances} = require("./kubernetes");
 
 // Express Session
 const expressSession = require("express-session");
@@ -87,7 +87,7 @@ app.post('/api/deployment/stop', async (req, res) => {
 });
 
 app.post('/api/deployment/delete', async (req, res) => {
-  if(req.session.githubAuthorized) {
+  if(req.session.githubAuthorized || req.body.key === process.env["CICD_KEY"]) {
     await deleteDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
       if(result) {
         return res.json({"ok": true});

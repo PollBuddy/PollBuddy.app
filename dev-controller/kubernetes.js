@@ -54,6 +54,32 @@ module.exports = {
     });
   },
 
+  listDevInstances: function(callback) {
+    const kc = new k8s.KubeConfig();
+    kc.loadFromDefault();
+
+    const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+
+    k8sApi.listNamespacedService('default', "true", false, undefined, undefined, /*"app.kubernetes.io/part-of=poll-buddy"*/).then(async (res) => {
+      console.log(res.body);
+      let items = res.body.items;
+      for (let i = 0; i < items.length; i++) {
+        // Add pod info
+        //console.log("ITEMS");
+        //console.log(items[i]);
+        await k8sApi.listNamespacedPod('default', "true", false,
+          undefined, undefined,
+          `app.kubernetes.io/part-of=poll-buddy,dev-instance-type=${items[i]["metadata"]["labels"]["dev-instance-type"]},dev-instance-id=${items[i]["metadata"]["labels"]["dev-instance-id"]}`)
+          .then((res) => {
+            //console.log(res.body);
+            items[i]["pods"] = res.body.items;
+          });
+
+      }
+      callback(res.body.items);
+    });
+  },
+
   startDevInstance: async function (dev_instance_type, dev_instance_id, callback) {
     const kc = new k8s.KubeConfig();
     kc.loadFromDefault();
