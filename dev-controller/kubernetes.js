@@ -1,5 +1,6 @@
 const k8s = require('@kubernetes/client-node');
 const fs = require('fs');
+const {exec} = require("child_process");
 
 var deployingInstances = [];
 
@@ -151,6 +152,7 @@ module.exports = {
       deployingInstances.push(dev_instance_id);
     }
 
+    // Create the deployment
     const { exec } = require('child_process');
     exec('bash ./deployTestInstance.sh ' + dev_instance_type + " " + dev_instance_id + " " + process.env["CLUSTER_DNS_SUBDOMAIN"],
       (err, stdout, stderr) => {
@@ -171,9 +173,15 @@ module.exports = {
         // Remove it from the lock list
         deployingInstances = deployingInstances.filter(item => item !== dev_instance_id)
 
+        // Monitor the deployment to make sure it didn't have any problems after we finished up our part
+        // We don't actually care what happens as the script will do the auto rollback for us
+        // Mainly to monitor master, although dev instances can be rolled back too
+        exec('bash ./monitorDeployment.sh ' + dev_instance_id);
+
         callback(true);
       }
     });
+
   },
 
   deleteDevInstance: function(dev_instance_type, dev_instance_id, callback) {

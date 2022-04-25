@@ -7,6 +7,14 @@ auto_page_reload();
 function deployment_action(dev_instance_type, dev_instance_id, action) {
    console.log(dev_instance_type);
    console.log(dev_instance_id);
+   if(action === "start") {
+     document.getElementById(dev_instance_type + "-" + dev_instance_id).innerText = "Starting in progress, please wait...";
+   } else if(action === "stop") {
+     document.getElementById(dev_instance_type + "-" + dev_instance_id).innerText = "Stopping in progress, please wait...";
+   } else if(action === "delete") {
+     document.getElementById(dev_instance_type + "-" + dev_instance_id).innerText = "Deleting in progress, please wait...";
+   }
+
    fetch('/api/deployment/' + action, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

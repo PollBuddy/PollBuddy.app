@@ -6,8 +6,6 @@
 # the app based on that.                                                                           #
 ####################################################################################################
 
-# Requires packages: docker, docker-compose, procmail, git, sed, tac, potentially others depending on your distro
-
 echo "Starting deployTestInstance.sh Script..."
 
 
