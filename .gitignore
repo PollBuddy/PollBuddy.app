@@ -29,3 +29,5 @@ yarn-error.log*
 kubernetes-secrets-mine.yml
 
 kubernetes-mine.yml
+
+dev-controller/temp/
