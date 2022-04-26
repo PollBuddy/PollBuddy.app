@@ -46,7 +46,7 @@ app.use((req, res, next) => {
 app.get('/', async (req, res) => {
   await listDevInstances(function(data){
     // TODO: Sort the services by creation timestamp
-    return res.render('index', { title: 'Hey', message: 'Hello there!', githubAuthorized: req.session.githubAuthorized || true, pollbuddyMember: req.session.pollbuddyMember || true, devInstances: data });
+    return res.render('index', { title: 'Hey', message: 'Hello there!', githubAuthorized: req.session.githubAuthorized, pollbuddyMember: req.session.pollbuddyMember, devInstances: data });
   });
 });
 
@@ -61,7 +61,7 @@ app.get('/api/deployment', async (req, res) => {
 
 app.post('/api/deployment/start', async (req, res) => {
   console.log(req.body);
-  if(req.session.githubAuthorized || true) {
+  if(req.session.githubAuthorized) {
     await startDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function (result) {
       if(result) {
         return res.json({"ok": true});
@@ -75,7 +75,7 @@ app.post('/api/deployment/start', async (req, res) => {
 });
 
 app.post('/api/deployment/stop', async (req, res) => {
-  if(req.session.githubAuthorized || true) {
+  if(req.session.githubAuthorized) {
     await stopDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
       if(result) {
         return res.json({"ok": true});
