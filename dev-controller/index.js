@@ -115,7 +115,7 @@ app.post('/api/deployment/new', async (req, res) => {
 
     // Parse the ID if necessary
     let id;
-    if(req.body.dev_instance_type && req.body.dev_instance_id) {
+    if(req.body.dev_instance_type !== undefined && req.body.dev_instance_id !== undefined) {
       // Must be a dev instance deployment
       if (req.body.dev_instance_type === "commit") {
         id = req.body.dev_instance_id;
