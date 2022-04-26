@@ -167,7 +167,7 @@ module.exports = {
 
         callback(false);
       } else {
-        // the entire stdout (buffered)
+        // Log stdout for good measure
         console.log(`stdout: ${stdout}`);
 
         // Remove it from the lock list
@@ -183,6 +183,59 @@ module.exports = {
     });
 
   },
+
+  deployMaster: function(callback) {
+    console.log("Creating master instance");
+
+    // Create a new folder to manage the instance files in
+    let tempFolder = "./temp";
+    if (!fs.existsSync(tempFolder)){
+      fs.mkdirSync(tempFolder);
+    }
+
+    // Exclusivity lock
+    if("master" in deployingInstances) {
+      setTimeout(function() {
+        this.deployMaster(callback);
+      }, 5000);
+      return;
+    } else {
+      // Add it to the lock list
+      deployingInstances.push("master");
+    }
+
+    // Create the deployment
+    const { exec } = require('child_process');
+    exec('bash ./deployMaster.sh',
+      (err, stdout, stderr) => {
+        if (err) {
+          // Some err occurred, report everything that happened
+          console.error(err);
+          console.log(`stdout: ${stdout}`);
+          console.log(`stderr: ${stderr}`);
+
+          // Remove it from the lock list
+          deployingInstances = deployingInstances.filter(item => item !== "master")
+
+          callback(false);
+        } else {
+          // Log stdout for good measure
+          console.log(`stdout: ${stdout}`);
+
+          // Remove it from the lock list
+          deployingInstances = deployingInstances.filter(item => item !== "master")
+
+          // Monitor the deployment to make sure it didn't have any problems after we finished up our part
+          // We don't actually care what happens as the script will do the auto rollback for us
+          // Mainly to monitor master, although dev instances can be rolled back too
+          exec('bash ./monitorDeployment.sh ' + "master");
+
+          callback(true);
+        }
+      });
+
+  },
+
 
   deleteDevInstance: function(dev_instance_type, dev_instance_id, callback) {
     console.log("Deleting dev instance of type " + dev_instance_type + " and ID " + dev_instance_id);
