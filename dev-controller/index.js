@@ -5,7 +5,9 @@ const kubernetes = require('./kubernetes')
 const dotenv = require('dotenv').config()
 const logger = require("morgan");
 
-const {listServices, startDevInstance, stopDevInstance, deleteDevInstance, deployDevInstance, listDevInstances} = require("./kubernetes");
+const {listServices, startDevInstance, stopDevInstance, deleteDevInstance, deployDevInstance, listDevInstances,
+  deployMaster
+} = require("./kubernetes");
 
 // Express Session
 const expressSession = require("express-session");
@@ -113,28 +115,41 @@ app.post('/api/deployment/new', async (req, res) => {
 
     // Parse the ID if necessary
     let id;
-    if(req.body.dev_instance_type === "commit") {
-      id = req.body.dev_instance_id;
-    } else if(req.body.dev_instance_type === "pr") {
-      try {
-        id = parsePullRequestId(req.body.dev_instance_id);
-      } catch (e) {
-        console.log("Invalid PR ID received: " + req.body.dev_instance_id);
+    if(req.body.dev_instance_type !== undefined && req.body.dev_instance_id !== undefined) {
+      // Must be a dev instance deployment
+      if (req.body.dev_instance_type === "commit") {
+        id = req.body.dev_instance_id;
+      } else if (req.body.dev_instance_type === "pr") {
+        try {
+          id = parsePullRequestId(req.body.dev_instance_id);
+        } catch (e) {
+          console.log("Invalid PR ID received: " + req.body.dev_instance_id);
+          return res.status(400).json({"ok": false});
+        }
+
+      } else {
         return res.status(400).json({"ok": false});
       }
 
+      // Start the deployment
+      await deployDevInstance(req.body.dev_instance_type, id, function (result) {
+        if (result) {
+          return res.json({"ok": true, "deploy_link": "https://dev-" + id + ".pollbuddy.app/"});
+        } else {
+          return res.status(500).json({"ok": false});
+        }
+      });
     } else {
-      return res.status(400).json({"ok": false});
+      // Must be a master deploy
+      // Start the deployment
+      await deployMaster(function (result) {
+        if (result) {
+          return res.json({"ok": true, "deploy_link": "https://pollbuddy.app/"});
+        } else {
+          return res.status(500).json({"ok": false});
+        }
+      });
     }
-
-    // Start the deployment
-    await deployDevInstance(req.body.dev_instance_type, id, function(result){
-      if(result) {
-        return res.json({"ok": true, "deploy_link": "https://dev-" + id + ".pollbuddy.app/"});
-      } else {
-        return res.status(500).json({"ok": false});
-      }
-    });
   } else {
     return res.status(401).json({"ok": false});
   }
