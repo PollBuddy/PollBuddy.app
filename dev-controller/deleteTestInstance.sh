@@ -21,11 +21,6 @@ ID=$2
 CLUSTER_DNS_SUBDOMAIN=$3
 SHORTID=${ID:0:7}
 
-# Fix some PRs having an incorrect format: refs/pull/<id>/merge
-if [ "${TYPE}" = "pr" ]; then
-  ID=${ID:10:3}
-fi
-
 ###############
 # Basic Setup #
 ###############
