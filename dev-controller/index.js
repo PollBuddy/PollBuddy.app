@@ -60,8 +60,8 @@ app.get('/api/deployment', async (req, res) => {
 });
 
 app.post('/api/deployment/start', async (req, res) => {
-  console.log(req.body);
   if(req.session.githubAuthorized) {
+    console.log("Got request to start an instance");
     await startDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function (result) {
       if(result) {
         return res.json({"ok": true});
@@ -90,6 +90,7 @@ app.post('/api/deployment/stop', async (req, res) => {
 
 app.post('/api/deployment/delete', async (req, res) => {
   if(req.session.githubAuthorized || req.body.key === process.env["CICD_KEY"]) {
+    console.log("Got request to delete an instance");
     await deleteDevInstance(req.body.dev_instance_type, req.body.dev_instance_id, function(result){
       if(result) {
         return res.json({"ok": true});
@@ -112,7 +113,7 @@ function parsePullRequestId(githubRef) {
 
 app.post('/api/deployment/new', async (req, res) => {
   if(req.session.githubAuthorized || req.body.key === process.env["CICD_KEY"]) {
-
+    console.log("Got request to create a new instance");
     // Parse the ID if necessary
     let id;
     if(req.body.dev_instance_type !== undefined && req.body.dev_instance_id !== undefined) {
@@ -181,7 +182,6 @@ app.get('/github-oauth-callback', async (req, res) => {
       await axios.get('https://api.github.com/user/memberships/orgs', {headers: {authorization: `Token ${req.session.github_access_token}`}}).then((result) => {
         for (let i = 0; i < result.data.length; i++) {
           let org = result.data[i]
-          console.log(org);
           if (org.organization_url === "https://api.github.com/orgs/PollBuddy" && org.state === "active") {
             req.session.pollbuddyMember = true;
             return res.redirect("/");

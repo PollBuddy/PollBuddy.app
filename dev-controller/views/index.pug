@@ -38,7 +38,7 @@ html
                         button(class='button-start' onclick='deployment_action("' + instance.metadata.labels["dev_instance_type"] + '", "' + instance.metadata.labels["dev_instance_id"] + '", "start")') Start Instance
                         button(class='button-stop' onclick='deployment_action("' + instance.metadata.labels["dev_instance_type"] + '", "' + instance.metadata.labels["dev_instance_id"] + '", "stop")') Stop Instance
                         button(class='button-delete' onclick='deployment_action("' + instance.metadata.labels["dev_instance_type"] + '", "' + instance.metadata.labels["dev_instance_id"] + '", "delete")') Delete Instance
-                    p(id=instance.metadata.labels["dev-instance-type"] + '-' + instance.metadata.labels["dev-instance-id"])
+                    p(id=instance.metadata.labels["dev_instance_type"] + '-' + instance.metadata.labels["dev_instance_id"])
                 br
 
 
