@@ -18,7 +18,6 @@ echo "Starting deleteTestInstance.sh Script..."
 # Name the variables
 TYPE=$1
 ID=$2
-CLUSTER_DNS_SUBDOMAIN=$3
 SHORTID=${ID:0:7}
 
 ###############
@@ -84,6 +83,12 @@ fi
 
 # Echo out what we're doing
 echo "Configuring Kubernetes files"
+
+# Kubernetes gets very mad if a label is a number and not a string, so we need to prefix PRs
+if [ "${TYPE}" = "pr" ]; then
+  ID="pr${ID}"
+  SHORTID="pr${SHORTID}"
+fi
 
 # Change variables in the YAML files
 for f in kubernetes/*.yml

@@ -144,6 +144,7 @@ module.exports = {
     // Exclusivity lock
     if(dev_instance_id in deployingInstances) {
       setTimeout(function() {
+        console.log("Exclusivity check failed, retrying in 5 seconds...");
         this.deployDevInstance(dev_instance_type, dev_instance_id, callback);
       }, 5000);
       return;
@@ -195,6 +196,7 @@ module.exports = {
 
     // Exclusivity lock
     if("master" in deployingInstances) {
+      console.log("Exclusivity check failed, retrying in 5 seconds...");
       setTimeout(function() {
         this.deployMaster(callback);
       }, 5000);
@@ -248,6 +250,7 @@ module.exports = {
 
     // Exclusivity lock
     if(dev_instance_id in deployingInstances) {
+      console.log("Exclusivity check failed, retrying in 5 seconds...");
       setTimeout(function() {
         this.deleteDevInstance(dev_instance_type, dev_instance_id, callback);
       }, 5000);
@@ -258,7 +261,7 @@ module.exports = {
     }
 
     const { exec } = require('child_process');
-    exec('bash ./deleteTestInstance.sh ' + dev_instance_type + " " + dev_instance_id + " " + process.env["CLUSTER_DNS_SUBDOMAIN"],
+    exec('bash ./deleteTestInstance.sh ' + dev_instance_type + " " + dev_instance_id,
       (err, stdout, stderr) => {
       if (err) {
         // Some err occurred, report everything that happened
