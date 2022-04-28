@@ -181,7 +181,8 @@ app.get('/github-oauth-callback', async (req, res) => {
       await axios.get('https://api.github.com/user/memberships/orgs', {headers: {authorization: `Token ${req.session.github_access_token}`}}).then((result) => {
         for (let i = 0; i < result.data.length; i++) {
           let org = result.data[i]
-          if (org.organization_url === "https://api.github.com/orgs/pollbuddy" && org.state === "active") {
+          console.log(org);
+          if (org.organization_url === "https://api.github.com/orgs/PollBuddy" && org.state === "active") {
             req.session.pollbuddyMember = true;
             return res.redirect("/");
           }
