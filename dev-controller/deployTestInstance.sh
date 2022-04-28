@@ -18,6 +18,7 @@ TYPE=$1
 ID=$2
 CLUSTER_DNS_SUBDOMAIN=$3
 SHORTID=${ID:0:7}
+ORIGINALID=${ID}
 
 ###############
 # Basic Setup #
@@ -97,7 +98,7 @@ do
   sed -i "s/master/${SHORTID}/g" "$f" || { echo "SED Failed, Aborting."; exit 1; }
   sed -i "s/no-type/${TYPE}/g" "$f" || { echo "SED Failed, Aborting."; exit 1; }
   sed -i "s/no-id/${ID}/g" "$f" || { echo "SED Failed, Aborting."; exit 1; }
-  sed -i "s/latest/${ID}/g" "$f" || { echo "SED Failed, Aborting."; exit 1; }
+  sed -i "s/latest/${ORIGINALID}/g" "$f" || { echo "SED Failed, Aborting."; exit 1; }
 done
 
 # We're done configuring
