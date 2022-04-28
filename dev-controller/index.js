@@ -120,11 +120,15 @@ app.post('/api/deployment/new', async (req, res) => {
       if (req.body.dev_instance_type === "commit") {
         id = req.body.dev_instance_id;
       } else if (req.body.dev_instance_type === "pr") {
-        try {
-          id = parsePullRequestId(req.body.dev_instance_id);
-        } catch (e) {
-          console.log("Invalid PR ID received: " + req.body.dev_instance_id);
-          return res.status(400).json({"ok": false});
+        if(req.body.dev_instance_id.includes("refs")) {
+          try {
+            id = parsePullRequestId(req.body.dev_instance_id);
+          } catch (e) {
+            console.log("Invalid PR ID received: " + req.body.dev_instance_id);
+            return res.status(400).json({"ok": false});
+          }
+        } else {
+          id = req.body.dev_instance_id;
         }
 
       } else {
