@@ -143,7 +143,7 @@ SVCNAME=poll-buddy-frontend-service-${SHORTID}
 SVCPORT=$(kubectl get svc --selector=app.kubernetes.io/name="${SVCNAME}" -o go-template='{{range .items}}{{range.spec.ports}}{{if .nodePort}}{{.nodePort}}{{"\n"}}{{end}}{{end}}{{end}}')
 
 # Edit configuration file
-sed -i "s/TEMPLATE_ID/${ID}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
+sed -i "s/TEMPLATE_ID/${ORIGINALID}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
 sed -i "s/TEMPLATE_SERVICE_NAME/${SVCNAME}.${CLUSTER_DNS_SUBDOMAIN}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
 sed -i "s/TEMPLATE_SERVICE_PORT/${SVCPORT}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
 
