@@ -3,7 +3,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: poll-buddy-volume-claim-management-server-master
+  name: poll-buddy-management-server-volume-claim
   labels:
     app.kubernetes.io/name: poll-buddy-management-server
     app.kubernetes.io/component: management-server
@@ -59,6 +59,9 @@ rules:
     resources: ["deployments"]
     verbs: ["*"]
   - apiGroups: ["*"]
+    resources: ["deployments/scale"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
     resources: ["services"]
     verbs: ["*"]
   - apiGroups: ["*"]
@@ -81,6 +84,9 @@ rules:
     verbs: ["*"]
   - apiGroups: ["*"]
     resources: ["statefulsets"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["statefulsets/scale"]
     verbs: ["*"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -242,4 +248,4 @@ spec:
           emptyDir: {}
         - name: dev-site-configs
           persistentVolumeClaim:
-            claimName: poll-buddy-volume-claim-management-server-master
+            claimName: poll-buddy-management-server-volume-claim
