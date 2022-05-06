@@ -155,7 +155,7 @@ module.exports = {
 
     // Create the deployment
     const { exec } = require('child_process');
-    exec('bash ./deployTestInstance.sh ' + dev_instance_type + " " + dev_instance_id + " " + process.env["CLUSTER_DNS_SUBDOMAIN"],
+    exec('bash ./deployTestInstance.sh ' + dev_instance_type + " " + dev_instance_id,
       (err, stdout, stderr) => {
       if (err) {
         // Some err occurred, report everything that happened
