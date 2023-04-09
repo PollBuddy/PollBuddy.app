@@ -13,7 +13,7 @@ echo "Starting deployMaster.sh Script..."
 ###############
 
 # Enter the folder to spin up an instance
-cd temp || { echo "Instance Folder Missing, Aborting."; exit 1; }
+cd instances || { echo "Instance Folder Missing, Aborting."; exit 1; }
 
 # For maximum reproducibility, delete the old folder
 rm -rf master

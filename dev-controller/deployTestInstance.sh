@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ####################################################################################################
-# This script is designed to be called with a commit/pr ID and a type string (either issue or pr). #
+# This script is designed to be called with a type string (either issue or pr) and a commit/pr ID. #
 # It will then take that, clone the repo, check out the commit or PR, and configure and start      #
 # the app based on that.                                                                           #
 ####################################################################################################
@@ -27,7 +27,7 @@ ORIGINALID=${ID}
 echo "Creating instance for '${TYPE}' with ID '${ID}'"
 
 # Enter the folder to spin up an instance
-cd temp || { echo "Test Instances Folder Missing, Aborting."; exit 1; }
+cd instances || { echo "Test Instances Folder Missing, Aborting."; exit 1; }
 
 # If for some reason this job was being rerun, we'll want to delete the old folder. We don't care if it fails of course
 rm -rf "${ID}"
@@ -135,16 +135,22 @@ echo "Configuring dev site"
 cd ../../../
 
 # Copy example configuration file
-cp NGINX_TEMPLATE.conf "conf.d.dev/${ID}.conf" || { echo "Template NGINX Config Copy Failed, Aborting."; exit 1; }
+cp APACHE_TEMPLATE.conf "configurations/${ID}.conf" || { echo "Template config copy failed, aborting!"; exit 1; }
 
 # Get the service port and name
 SVCNAME=poll-buddy-frontend-service-${SHORTID}
 SVCPORT=$(kubectl get svc --selector=app.kubernetes.io/name="${SVCNAME}" -o go-template='{{range .items}}{{range.spec.ports}}{{if .nodePort}}{{.nodePort}}{{"\n"}}{{end}}{{end}}{{end}}')
 
 # Edit configuration file
-sed -i "s/TEMPLATE_ID/${ORIGINALID}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
-sed -i "s/TEMPLATE_SERVICE_NAME/${SVCNAME}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
-sed -i "s/TEMPLATE_SERVICE_PORT/${SVCPORT}/g" "conf.d.dev/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
+sed -i "s/TEMPLATE_ID/${ORIGINALID}/g" "configurations/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
+sed -i "s/TEMPLATE_SERVICE_NAME/${SVCNAME}/g" "configurations/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
+sed -i "s/TEMPLATE_SERVICE_PORT/${SVCPORT}/g" "configurations/${ID}.conf" || { echo "NGINX SED Failed, Aborting."; exit 1; }
+
+# Now that the service exists, replace the frontend URL variable for the backend with a proper one
+kubectl get configmap "poll-buddy-backend-configmap-${SHORTID}" -o yaml | \
+  sed -e "s|frontend_url: http://localhost:7655|frontend_url: https://dev-${ORIGINALID}.pollbuddy.app|" | \
+  kubectl apply -f -
+kubectl rollout restart deployment "poll-buddy-backend-deployment-${SHORTID}"
 
 # We're done!
 echo "Dev site configured"
@@ -155,7 +161,8 @@ echo "Dev site configured"
 
 # Talk about it
 echo "Reloading dev site configs"
-ps -ef | grep "nginx: master process" | grep -v grep | awk '{print $2}' | xargs kill -s HUP || { echo "NGINX Reload Failed, Aborting."; exit 1; }
+# Find the process ID of the oldest httpd process and send it the USR1 signal for a graceful restart
+pgrep -o httpd | xargs kill -s USR1 || { echo "Dev site config reload failed, aborting!"; exit 1; }
 
 # We're done!
 echo "Dev site reloaded"

@@ -1,9 +1,25 @@
-# Allocate a volume for data storage
+# Allocate volumes for data storage
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: poll-buddy-management-server-volume-claim
+  name: poll-buddy-management-server-volume-claim-instances
+  labels:
+    app.kubernetes.io/name: poll-buddy-management-server
+    app.kubernetes.io/component: management-server
+    app.kubernetes.io/part-of: poll-buddy
+    app: poll-buddy-management-server
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 32Gi
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: poll-buddy-management-server-volume-claim-configurations
   labels:
     app.kubernetes.io/name: poll-buddy-management-server
     app.kubernetes.io/component: management-server
@@ -31,7 +47,7 @@ spec:
   ports:
     - port: 80
       protocol: TCP
-      targetPort: nginx
+      targetPort: http
   selector:
     app.kubernetes.io/name: poll-buddy-management-server
     app.kubernetes.io/component: management-server
@@ -102,6 +118,40 @@ roleRef:
   name: poll-buddy-management-server-service-role
   apiGroup: rbac.authorization.k8s.io
 
+# Create a priority class to make sure the management pods don't get evicted or can't be scheduled
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: poll-buddy-high-priority
+value: 1000
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+description: "This priority class should be used for managing service pods only."
+
+
+# Create a priority class to make sure the main instance don't get evicted or can't be scheduled
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: poll-buddy-medium-priority
+value: 100
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+description: "This priority class should be used for the main production pods only."
+
+
+# Create a priority class for the dev instances which can get evicted or failed to schedule
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: poll-buddy-low-priority
+value: 1
+preemptionPolicy: Never
+globalDefault: true
+description: "This priority class should be used for the development test instances and other low priority pods."
 
 # Create a deployment to run in
 ---
@@ -124,6 +174,8 @@ spec:
       app: poll-buddy-management-server
   strategy:
     type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
   template:
     metadata:
       labels:
@@ -135,21 +187,22 @@ spec:
       serviceAccountName: poll-buddy-management-server-service-account
       shareProcessNamespace: true
       restartPolicy: Always
+      priorityClassName: poll-buddy-high-priority
       containers:
-        - name: nginx
+        - name: proxy-server
           image: pollbuddy/proxy-server:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
-              name: nginx
+              name: http
           volumeMounts:
             - name: dev-site-configs
-              mountPath: /etc/nginx/conf.d.dev
+              mountPath: /usr/local/apache2/conf/dynamic
           # Probes to report the status of the application
           startupProbe: # Runs to know when the app started up
             httpGet:
               path: /
-              port: nginx
+              port: http
               scheme: HTTP
             failureThreshold: 10
             periodSeconds: 5
@@ -159,7 +212,7 @@ spec:
           readinessProbe: # Runs to make sure the app is ready to receive requests
             httpGet:
               path: /
-              port: nginx
+              port: http
               scheme: HTTP
             failureThreshold: 2
             periodSeconds: 10
@@ -169,7 +222,7 @@ spec:
           livenessProbe: # Runs to make sure the app is alive
             httpGet:
               path: /
-              port: nginx
+              port: http
               scheme: HTTP
             failureThreshold: 2
             periodSeconds: 10
@@ -181,10 +234,10 @@ spec:
           image: pollbuddy/dev-controller:latest
           imagePullPolicy: Always
           volumeMounts:
-            - name: temp-volume
-              mountPath: /app/temp
+            - name: dev-site-instances
+              mountPath: /app/instances
             - name: dev-site-configs
-              mountPath: /app/conf.d.dev
+              mountPath: /app/configurations
           env:
             - name: CLUSTER_DNS_SUBDOMAIN
               value: default.svc.cluster.local
@@ -244,8 +297,9 @@ spec:
             timeoutSeconds: 5
             initialDelaySeconds: 5
       volumes:
-        - name: temp-volume
-          emptyDir: {}
+        - name: dev-site-instances
+          persistentVolumeClaim:
+            claimName: poll-buddy-management-server-volume-claim-instances
         - name: dev-site-configs
           persistentVolumeClaim:
-            claimName: poll-buddy-management-server-volume-claim
+            claimName: poll-buddy-management-server-volume-claim-configurations

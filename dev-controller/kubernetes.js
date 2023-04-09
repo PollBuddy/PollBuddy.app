@@ -105,7 +105,7 @@ module.exports = {
       }
     });
 
-    // Update each deployment to have a replica scale of 1
+    // Update each deployment to have a replica scale of 0
     for (let i = 0; i < deployments.length; i++) {
       await k8sApi.patchNamespacedDeploymentScale(deployments[i], 'default', patch, undefined, undefined, undefined, undefined, options)
         .then(() => {
@@ -242,12 +242,6 @@ module.exports = {
   deleteDevInstance: function(dev_instance_type, dev_instance_id, callback) {
     console.log("Deleting dev instance of type " + dev_instance_type + " and ID " + dev_instance_id);
 
-    // Create a new folder to manage the instance files in
-    let tempFolder = "./temp";
-    if (!fs.existsSync(tempFolder)){
-      fs.mkdirSync(tempFolder);
-    }
-
     // Exclusivity lock
     if(dev_instance_id in deployingInstances) {
       console.log("Exclusivity check failed, retrying in 5 seconds...");
@@ -265,6 +259,7 @@ module.exports = {
       (err, stdout, stderr) => {
       if (err) {
         // Some err occurred, report everything that happened
+        console.error(`A problem occurred while deleting test instance ${dev_instance_id}:`)
         console.error(err);
         console.log(`stdout: ${stdout}`);
         console.log(`stderr: ${stderr}`);
@@ -274,7 +269,8 @@ module.exports = {
 
         callback(false);
       } else {
-        // the entire stdout (buffered)
+        // Print stdout for potential debugging if necessary
+        console.error(`Test instance ${dev_instance_id} deleted successfully!`)
         console.log(`stdout: ${stdout}`);
 
         // Remove it from the lock list
