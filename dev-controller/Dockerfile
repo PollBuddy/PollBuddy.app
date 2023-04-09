@@ -12,7 +12,7 @@ COPY kubernetes.js ./kubernetes.js
 COPY deployTestInstance.sh ./deployTestInstance.sh
 COPY deployMaster.sh ./deployMaster.sh
 COPY deleteTestInstance.sh ./deleteTestInstance.sh
-COPY NGINX_TEMPLATE.conf ./NGINX_TEMPLATE.conf
+COPY APACHE_TEMPLATE.conf ./APACHE_TEMPLATE.conf
 
 
 RUN apt update && \
