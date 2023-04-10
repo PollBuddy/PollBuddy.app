@@ -202,27 +202,27 @@ spec:
           startupProbe: # Runs to know when the app started up
             httpGet:
               path: /
-              port: http
+              port: 80
               scheme: HTTP
             failureThreshold: 10
             periodSeconds: 5
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 5
             initialDelaySeconds: 5
           readinessProbe: # Runs to make sure the app is ready to receive requests
             httpGet:
               path: /
-              port: http
+              port: 80
               scheme: HTTP
             failureThreshold: 2
             periodSeconds: 10
             successThreshold: 1
-            timeoutSeconds: 3
+            timeoutSeconds: 5
             initialDelaySeconds: 5
           livenessProbe: # Runs to make sure the app is alive
             httpGet:
               path: /
-              port: http
+              port: 80
               scheme: HTTP
             failureThreshold: 2
             periodSeconds: 10
@@ -274,7 +274,7 @@ spec:
             failureThreshold: 10
             periodSeconds: 5
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 5
             initialDelaySeconds: 5
           readinessProbe: # Runs to make sure the app is ready to receive requests
             httpGet:
@@ -284,7 +284,7 @@ spec:
             failureThreshold: 2
             periodSeconds: 10
             successThreshold: 1
-            timeoutSeconds: 3
+            timeoutSeconds: 5
             initialDelaySeconds: 5
           livenessProbe: # Runs to make sure the app is alive
             httpGet:
