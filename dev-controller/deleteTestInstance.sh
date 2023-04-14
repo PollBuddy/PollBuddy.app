@@ -48,6 +48,12 @@ echo "Configuring dev site."
 # Move out of the instance folder
 cd .. || { echo "Could not cd backwards, aborting!"; exit 1; }
 
+# Include ID change fix from deployTestInstance.sh
+if [ "${TYPE}" = "pr" ]; then
+  ID="pr${ID}"
+  SHORTID="pr${SHORTID}"
+fi
+
 # Delete the configuration file
 rm "configurations/${ID}.conf" || { echo "Instance dev site config delete failed, aborting!"; exit 1; }
 
