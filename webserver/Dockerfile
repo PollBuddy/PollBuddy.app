@@ -18,4 +18,4 @@ RUN dos2unix /usr/local/apache2/conf/httpd.conf
 RUN apachectl configtest
 
 # Health Check
-HEALTHCHECK --interval=15s --timeout=3s CMD curl -f http://localhost || exit 1
+HEALTHCHECK --interval=15s --timeout=3s CMD curl -f http://localhost/healthcheck || exit 1
