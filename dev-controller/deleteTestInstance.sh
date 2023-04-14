@@ -25,15 +25,24 @@ ORIGINALID=${ID}
 ############
 
 # Enter the instance folder
-cd "instances/${ID}/PollBuddy" || { echo "Commit folder missing, aborting!"; exit 1; }
+cd "instances" || { echo "Instances folder missing, aborting."; exit 1; }
 
-# Delete the instance from Kubernetes
-echo "Deleting instance"
-kubectl delete -f kubernetes/ || { echo "Kubectl delete failed, aborting!"; exit 1; }
+# Try to enter the instance folder. It may be already deleted if something went wrong halfway through a previous run.
+if [ -d "${ID}" ]
+then
+  cd "${ID}/PollBuddy" || { echo "Cannot cd into instance folder, aborting!"; exit 1; }
 
-# Delete the instance folder
-cd ../.. || { echo "Could not cd backwards, aborting!"; exit 1; }
-rm -rf "${ID}"
+  # Delete the instance from Kubernetes
+  echo "Deleting instance"
+  kubectl delete -f kubernetes/ || { echo "Kubectl delete failed, aborting!"; exit 1; }
+
+  # Delete the instance folder
+  cd ../.. || { echo "Could not cd backwards, aborting!"; exit 1; }
+  rm -rf "${ID}"
+
+else
+  echo "Instance folder appears to already have been deleted, skipping."
+fi
 
 # We're done!
 echo "Instance is now deleted."
@@ -55,7 +64,7 @@ if [ "${TYPE}" = "pr" ]; then
 fi
 
 # Delete the configuration file
-rm "configurations/${ID}.conf" || { echo "Instance dev site config delete failed, aborting!"; exit 1; }
+rm -f "configurations/${ID}.conf"
 
 # We're done!
 echo "Dev site configured."

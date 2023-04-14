@@ -27,7 +27,7 @@ ORIGINALID=${ID}
 echo "Creating instance for '${TYPE}' with ID '${ID}'"
 
 # Enter the folder to spin up an instance
-cd instances || { echo "Test Instances Folder Missing, Aborting."; exit 1; }
+cd "instances" || { echo "Instances folder missing, aborting."; exit 1; }
 
 # If for some reason this job was being rerun, we'll want to delete the old folder. We don't care if it fails of course
 rm -rf "${ID}"

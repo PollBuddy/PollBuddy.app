@@ -13,7 +13,7 @@ echo "Starting deployMaster.sh Script..."
 ###############
 
 # Enter the folder to spin up an instance
-cd instances || { echo "Instance Folder Missing, Aborting."; exit 1; }
+cd "instances" || { echo "Instances folder missing, aborting."; exit 1; }
 
 # For maximum reproducibility, delete the old folder
 rm -rf master
@@ -23,7 +23,7 @@ echo "Creating folder"
 mkdir master
 
 # Enter it
-cd master || { echo "Folder Missing, Aborting."; exit 1; }
+cd master || { echo "Master instance folder missing, aborting."; exit 1; }
 
 # Clone the repo
 echo "Cloning repo"
