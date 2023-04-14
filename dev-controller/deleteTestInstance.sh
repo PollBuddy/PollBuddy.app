@@ -60,7 +60,7 @@ echo "Dev site configured."
 
 # Talk about it
 echo "Reloading dev site configs"
-#ps -ef | grep "nginx: master process" | grep -v grep | awk '{print $2}' | xargs kill -s HUP || { echo "Dev site config reload failed, aborting!"; exit 1; }
+
 # Find the process ID of the oldest httpd process and send it the USR1 signal for a graceful restart
 pgrep -o httpd | xargs kill -s USR1 || { echo "Dev site config reload failed, aborting!"; exit 1; }
 

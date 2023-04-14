@@ -118,7 +118,7 @@ sleep 5
 # Scale the DB replicas to 1 instead of the default 3, since apparently Kubernetes has rather low pod limits per node,
 # and it's not unlikely we'll hit those limits with 3 DBs per instance. Also, they're just test instances, they don't
 # actually need 3 DBs.
-kubectl scale statefulset "poll-buddy-db-statefulset-${ORIGINALID}" --replicas 1
+kubectl scale statefulset "poll-buddy-db-statefulset-${SHORTID}" --replicas 1
 
 # We're done!
 echo "Instance is now running"
@@ -161,6 +161,7 @@ echo "Dev site configured"
 
 # Talk about it
 echo "Reloading dev site configs"
+
 # Find the process ID of the oldest httpd process and send it the USR1 signal for a graceful restart
 pgrep -o httpd | xargs kill -s USR1 || { echo "Dev site config reload failed, aborting!"; exit 1; }
 

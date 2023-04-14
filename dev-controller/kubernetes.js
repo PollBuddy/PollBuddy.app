@@ -67,9 +67,10 @@ module.exports = {
         });
     }
 
-    // Scale up the DB too (3 instead)
-    patch[0]["value"] = 3;
-    await k8sApi.patchNamespacedStatefulSetScale("poll-buddy-db-statefulset-" + dev_instance_id.substring(0, 7), 'default', patch, undefined, undefined, undefined, undefined, options)
+    // Scale up the DB too (1 instance instead of default 3 to avoid hitting limits)
+    patch[0]["value"] = 1;
+    let instanceId = dev_instance_type === "pr" ? "pr" + dev_instance_id : dev_instance_id.substring(0, 7);
+    await k8sApi.patchNamespacedStatefulSetScale("poll-buddy-db-statefulset-" + instanceId, 'default', patch, undefined, undefined, undefined, undefined, options)
       .then(() => {
         console.log("Patched " + "poll-buddy-db-statefulset-" + dev_instance_id);
       })
