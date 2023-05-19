@@ -17,6 +17,8 @@ echo "Starting deleteTestInstance.sh Script..."
 # Name the variables
 TYPE=$1
 ID=$2
+# ID Might have "pr" prefixed, delete if so
+ID=${ID//pr/}
 SHORTID=${ID:0:7}
 ORIGINALID=${ID}
 
